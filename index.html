@@ -12,7 +12,21 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
+<script>
+(function(){var V='2e0ec67af9';
+if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(function(){})})}
+function onStart(){var s=document.getElementById('start');return !s||getComputedStyle(s).display!=='none'&&s.offsetParent!==null}
+var pending=false,busy=false;
+function check(){if(busy||document.hidden)return;
+ if(pending){if(onStart())location.reload();return}
+ busy=true;fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
+  if(j&&j.v&&j.v!==V){try{if(sessionStorage.getItem('vfr')===j.v)return;sessionStorage.setItem('vfr',j.v)}catch(e){}pending=true;
+   var go=function(){if(onStart())location.reload()};
+   if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){navigator.serviceWorker.getRegistration().then(function(g){return g&&g.update()}).then(go,go)}else go()}
+ }).catch(function(){}).then(function(){busy=false})}
+document.addEventListener('visibilitychange',check);addEventListener('pageshow',check);addEventListener('focus',check);setTimeout(check,3000);setInterval(check,60000);
+})();
+</script>
 
 <style>
 :root{
