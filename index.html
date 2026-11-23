@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <script>
-(function(){var V='94d945409d';
+(function(){var V='e66c4459ab';
 if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(function(){})})}
 function onStart(){var s=document.getElementById('start');return !s||getComputedStyle(s).display!=='none'&&s.offsetParent!==null}
 var pending=false,busy=false;
@@ -2241,10 +2241,24 @@ const Drop = {
     const anim = {pillow:'.squash', drum:'.skin', jelly:'.wob', tramp:'.mat', bell:'.swing', booba:'.boo'}[k];
     if(anim){ const el=$('#drscene '+anim); if(el){ el.classList.remove('hit'); void el.getBoundingClientRect(); el.classList.add('hit'); } }
   },
-  shatter(x,y){ const fx=$('#drfx');
-    burst(fx, x, y, {n:16, col:['#bfe6fb','#9fd3f5','#ffffff','#7fb3e8'], r:7, dist:120, cone:2.6, up:20, fall:60, dur:900});
-    for(let i=0;i<7;i++){ const sx=x+(Math.random()-.5)*90, sy=y+8+Math.random()*10, s=7+Math.random()*6, a=Math.random()*360;
-      svgEl('path',{d:`M${sx} ${sy-s} L${sx+s} ${sy+s*.6} L${sx-s*.8} ${sy+s*.4}Z`, fill:['#bfe6fb','#9fd3f5','#e8f6ff'][i%3], stroke:'#7fb3e8','stroke-width':1, class:'shard', transform:`rotate(${a} ${sx} ${sy})`}, fx); } },
+  shatter(x,y){ const fx=$('#drfx'), my=this.token;
+    burst(fx, x, y, {n:8, col:['#ffffff','#e8f6ff'], r:3, dist:50, dur:400});
+    const floor=sx=>{ const d=(sx-345)/70; return Math.abs(d)<1 ? 398+d*d*60 : DRG-2; };
+    const P=[];
+    for(let i=0;i<14;i++){ const s=7+Math.random()*8;
+      const el=svgEl('path',{d:`M0 ${-s} L${s} ${s*.6} L${-s*.8} ${s*.5}Z`, fill:['#bfe6fb','#9fd3f5','#e8f6ff','#ffffff'][i%4], stroke:'#7fb3e8','stroke-width':1.2, class:'shard'}, fx);
+      P.push({el, x:x+(Math.random()-.5)*10, y:y-4, vx:(Math.random()-.5)*520, vy:-(260+Math.random()*420), a:Math.random()*360, va:(Math.random()-.5)*900, s, rest:false}); }
+    let last=performance.now();
+    const step=(now)=>{ if(my!==this.token || !P[0].el.isConnected) return;
+      const dt=Math.min(.033,(now-last)/1000); last=now; let moving=false;
+      for(const p of P){ if(p.rest) continue; moving=true;
+        p.vy+=1700*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.a+=p.va*dt;
+        if(p.x<8){ p.x=8; p.vx=-p.vx*.5; } if(p.x>632){ p.x=632; p.vx=-p.vx*.5; }
+        const f=floor(p.x)-p.s*.4;
+        if(p.y>=f && p.vy>0){ p.y=f; if(p.vy>160){ p.vy=-p.vy*.32; p.vx*=.6; p.va*=.5; if(Math.random()<.5) tone(3000+Math.random()*1500,null,.06,'sine',.025); } else { p.vy=0; p.vx*=.5; if(Math.abs(p.vx)<20) p.rest=true; } }
+        p.el.setAttribute('transform',`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${p.a.toFixed(0)})`); }
+      if(moving) requestAnimationFrame(step); };
+    requestAnimationFrame(step); },
   clearShards(){ $$('#drfx .shard').forEach(s=>s.parentNode.removeChild(s)); },
   fall(k, my){
     const it=DRITEMS[k]; let x=DRHAND[0], y=DRHAND[1], vx=0, vy=0, hits=0, mode='fly', t0=performance.now(), last=t0, rest=0;
